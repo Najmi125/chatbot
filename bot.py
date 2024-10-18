@@ -1,54 +1,59 @@
-pip install streamlit transformers
 import streamlit as st
 from transformers import pipeline
-import base64
 
-# Load Q&A model pipeline
+# Load the model for question-answering
 @st.cache_resource
 def load_qa_model():
-    return pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+    return pipeline("text-generation", model="gpt2")
 
-qa_pipeline = load_qa_model()
+# Load the model once when the app starts
+qa_model = load_qa_model()
 
-# Function to set the background image (world map)
-def add_bg_from_url():
-    st.markdown(
-         f"""
-         <style>
-         .stApp {{
-             background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/BlankMap-World6.svg/2000px-BlankMap-World6.svg.png");
-             background-size: cover;
-         }}
-         </style>
-         """,
-         unsafe_allow_html=True
-     )
+# Custom CSS for a colorful background and fun style
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #e6f7ff;
+    }
+    .main {
+        background-color: #f0f8ff;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    .stTextInput > div > input {
+        background-color: #ffe6f0;
+        color: #333;
+        border-radius: 5px;
+    }
+    .stButton > button {
+        background-color: #66ccff;
+        color: white;
+        border-radius: 5px;
+    }
+    h1 {
+        color: #ff6666;
+        text-align: center;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    p {
+        color: #333;
+        font-size: 18px;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Set background
-add_bg_from_url()
+st.title("Ask Azb any general knowledge question!")
+st.write("Hello kids! Type your question below, and I'll do my best to answer with fun and facts!")
 
-# Title of the app
-st.title("Ask Anything About Geography")
+# Get user input
+user_question = st.text_input("What's your question? 🤔")
 
-# Prompt for user input
-question = st.text_input("Enter your geography-related question:")
-
-# Process the question using the Q&A model
-if st.button("Ask"):
-    if question:
-        context = """
-        Geography is the study of places and the relationships between people and their environments. 
-        Geographers explore both the physical properties of Earth's surface and the human societies spread across it. 
-        They also examine how human culture interacts with the natural environment and the way that locations and places can impact people.
-        The field of geography is broad, ranging from the study of physical landscapes, climates, and ecosystems to the analysis of political and economic geographies.
-        """
-        # Get the answer
-        result = qa_pipeline(question=question, context=context)
-        answer = result['answer']
-
-        # Show the answer
-        st.write(f"**Answer:** {answer}")
-    else:
-        st.write("Please enter a question.")
-
-
+if user_question:
+    with st.spinner('Thinking... 💭'):
+        response = qa_model(user_question, max_length=100, num_return_sequences=1)
+        st.write("Azb's Answer:")
+        st.write(response[0]['generated_text'])
